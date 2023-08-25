@@ -1,0 +1,39 @@
+CREATE DATABASE vertical_db;
+
+USE vertical_db;
+
+CREATE TABLE user_name (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+);
+
+
+CREATE TABLE user_contact (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255)
+);
+
+CREATE TABLE book_title (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    author VARCHAR(255)
+);
+
+CREATE TABLE book_author (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    author VARCHAR(255)
+);
+
+CREATE TABLE stores_central (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    address VARCHAR(255)
+);
+
+CREATE TABLE stores_suburban (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    address VARCHAR(255)
+);
+
