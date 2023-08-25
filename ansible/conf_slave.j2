@@ -1,0 +1,4 @@
+USE mysql;
+ALTER USER 'root'@'localhost' IDENTIFIED WITH 'mysql_native_password' BY 'strongpassword!';
+CHANGE MASTER TO MASTER_HOST='{{ host_ip }}', MASTER_USER='replication', MASTER_PASSWORD='repopass!', MASTER_LOG_FILE = '{{ binlog_file }}', MASTER_LOG_POS = {{ binlog_position }};
+START SLAVE;
