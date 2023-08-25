@@ -175,7 +175,7 @@ CREATE TABLE stores_suburban_range_B (
 - Используются, также, terraform + ansible, инфраструктура разворачивается в yandex-cloud. Для автоматизации процесса, был создан файл с переменными, куда tf и ansible заворачивают значения после исполнения скрипта. Самым сложным моментом было вытащить значения binlog file и binlog position.
 В общем, все файлы я прикрепляю к этому ДЗ и, надеюсь, вы их посомтрите. Мне очень важно ваше мнение, т.к. я реально провел над этим всем почти три дня. Да, я знаю, что там нужно еще доработать, но у меня горят остальные работы и я могу закопаться на неделю в этом, т.к. сей процесс невероятно интересен.
 
-- Собственно, погнали по шагам. Разворачиваем две виртушки на YC (terraform/main.tf, infrastructure.tf, outputs.tf, variables.tf, meta.yaml). Здесь я обращу ваше внимание, что terraform host и ansible host - у меня это две разные виртуалки.
+- Собственно, погнали по шагам. Разворачиваем две виртушки на YC (***terraform / main.tf, infrastructure.tf, outputs.tf, variables.tf, meta.yaml***). Здесь я обращу ваше внимание, что terraform host и ansible host - у меня это две разные виртуалки.
 
 ![sql1](img/tf1.JPG)   
 
@@ -183,4 +183,26 @@ CREATE TABLE stores_suburban_range_B (
 
 ![sql1](img/sqlp1.JPG)  
 
-![sql1](img/inv.JPG) 
+![sql1](img/inv.JPG)   
+
+- Все выглядит неплохо. Запускаем плэйбук для master-ноды, запушим туда первичную конфигурацию (***ansible / sql_playbook.yaml***), (***ansible / conf.sql***) :
+
+![sql1](img/as1.JPG)  
+
+![sql1](img/sqlp2.JPG)  
+
+- Видимо, что значения binlog_file и binlog_position записались в файл с переменными. Запускаем второй плэйбук для slave-ноды (***sql_slave_playbook.yaml***) и используем конфигурацию уже с переменными (***conf_slave.j2***). Передаем в формате jinja, чтобы переменные могли быть правильно считаны:
+
+![sql1](img/as2.JPG)  
+
+- Репликация master-slave сделана. Теперь создадим на мастере базу данных vertical_db:
+
+![sql1](img/dbcr.JPG)  
+
+- ...и проверим ее существование на slave:
+
+![sql1](img/chsl.JPG)
+
+
+
+ 
