@@ -39,35 +39,113 @@
 
 ### Ответ:  
 
-- Данное задание я буду выполнять путем добавления таблицы в задание 3. Таблица будет простая, но, тем не менее, с примерами обоих типов масштабирования:
+- Данное задание я буду выполнять путем приведения примеров MySQL конфигов и небольшого пояснения.
+Вот пример вертикального шаринга (когда каждый столбец, по сути, является отдельной физической таблицей):
 
 ```
--- Создание базы данных
-CREATE DATABASE example_db;
 
--- Создание таблицы "users" для вертикального шаринга (разделение столбцов между таблицами)
-CREATE TABLE users (
+CREATE DATABASE vertical_db;
+
+
+CREATE TABLE user_name (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+);
+
+
+CREATE TABLE user_contact (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users_info(user_id)
+);
+
+CREATE TABLE book_title (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    author VARCHAR(255),
+);
+
+CREATE TABLE book_author (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    author VARCHAR(255),
+);
+
+CREATE TABLE stores_central (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    address VARCHAR(255)
+);
+
+CREATE TABLE stores_suburban (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    address VARCHAR(255)
+);
+
+```
+
+- Если с вертикальным масштабированием пример конфига базы можно привести относительно легко, т. к. модель scaling up (вертикальное масштабирование) как раз и предполагает масштабирование на одном мощном устройстве, то с горизонтальным (в виде MySQL конфига), это будет выглядеть, примерно, вот так:
+
+```
+
+CREATE DATABASE horizontal_db;
+
+CREATE TABLE user_range_A (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
     email VARCHAR(255)
 );
 
--- Создание таблицы "books" для горизонтального шаринга (разделение строк между базами данных)
-CREATE TABLE books (
-    book_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,  ## Внешний ключ, связанный с user_id в таблице users
-    title VARCHAR(255),
-    author VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)  -- Связь с таблицей users по user_id
+CREATE TABLE user_range_B (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255)
 );
 
--- Создание таблицы "stores" для горизонтального шаринга (разделение строк между базами данных)
-CREATE TABLE stores (
+CREATE TABLE book_range_A (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT, 
+    book_title VARCHAR(255),
+    book_author VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users_range_A(user_id)  
+);
+
+CREATE TABLE book_range_B (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT, 
+    book_title VARCHAR(255),
+    book_author VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users_range_B(user_id)  
+);
+
+CREATE TABLE stores_central_range_A (
     store_id INT AUTO_INCREMENT PRIMARY KEY,
     store_name VARCHAR(255),
-    location VARCHAR(255)
+    store_address VARCHAR(255)
+);
+
+CREATE TABLE stores_central_range_B (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    store_address VARCHAR(255)
+);
+
+CREATE TABLE stores_suburban_range_A (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    store_address VARCHAR(255)
+);
+
+CREATE TABLE stores_suburban_range_B (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_name VARCHAR(255),
+    store_address VARCHAR(255)
 );
 ```
+
+Но, согласитесь, делать все это в одной базе и на одной машине не имеет вообще никакого смысла, т.к. логика горизонтального масштабирования - "размазывание" данных по нескольким серверам с помощью репликации и использования slave-серверов на чтение.   
+
 
 ## Дополнительные задания (со звёздочкой*)
 Эти задания дополнительные, то есть не обязательные к выполнению, и никак не повлияют на получение вами зачёта по этому домашнему заданию. Вы можете их выполнить, если хотите глубже шире разобраться в материале.
