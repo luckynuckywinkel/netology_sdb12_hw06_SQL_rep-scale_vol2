@@ -1,0 +1,33 @@
+---
+- name: install / config MySQL slave
+  hosts: master
+  vars_files:
+    - "sqlpass.yaml"
+  become: true
+  tasks:
+
+
+
+    - name: Copy conf_vertical.j2 template to remote host
+      template:
+        src: conf_vertical.j2
+        dest: /tmp/conf_vertical.sql
+
+
+    - name: Execute SQL queries
+      mysql_db:
+        name: mysql
+        login_user: root
+        login_password: "{{ mysql_password }}"
+        state: import
+        target: /tmp/conf_vertical.sql
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      become: true
+
+    - name: Show databases
+      shell: "mysql -u root -p'{{ mysql_password }}' -e 'SHOW DATABASES;'"
+      register: databases
+
+    - name: Display databases
+      debug:
+        var: databases.stdout_lines
