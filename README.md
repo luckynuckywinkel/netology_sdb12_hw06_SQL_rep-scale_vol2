@@ -166,4 +166,8 @@ CREATE TABLE stores_suburban_range_B (
 
 **Scale Out**  
 
-![sql1](img/scaleout.JPG) 
+![sql1](img/scaleout.JPG)   
+
+- Я попытаюсь реализовать вертикальное масштабирование путем загрузки конфигурации выше на master-slave кластер.
+
+- Для построения master-slave кластера я существенно автоматизировал выполнение предыдущего домашнего задания (оно находится <code>[тут](https://github.com/luckynuckywinkel/netology_sdb12_hw06_SQL_rep-scale_vol1 "SQL-rep-scale-vol1")</code>
