@@ -1,0 +1,121 @@
+---
+- name: install / config MySQL slave
+  hosts: slave
+  vars_files:
+    - "sqlpass.yaml"
+  become: true
+  tasks:
+
+    - name: apt update
+      apt:
+        update_cache: true
+
+
+    - name: Install GNUPG
+      apt:
+        name: gnupg
+        state: present
+
+
+    - name: Install Python Pip
+      apt:
+        name: python-pip
+
+    - name: Install setuptools package
+      apt:
+        name: python-setuptools
+      become: yes
+
+
+    - name: Install PyMySQL module
+      pip:
+        name: pymysql<1.0.0
+      become: yes
+
+    - name: Add MySQL GPG key
+      apt_key:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+        state: present
+
+    - name: Add MySQL APT repository
+      apt_repository:
+        repo: deb http://repo.mysql.com/apt/debian/ buster mysql-8.0
+        state: present
+
+    - name: apt update
+      apt:
+        update_cache: true
+
+    - name: Install MySQL packages
+      apt:
+        name:
+          - wget
+          - mysql-server
+          - mysql-client
+        state: present
+
+    - name: Create MySQL log directory
+      file:
+        path: /var/log/mysql
+        state: directory
+        owner: mysql
+        group: mysql
+
+    - name: Create MySQL lib directory
+      file:
+        path: /var/lib/mysql
+        state: directory
+        owner: mysql
+        group: mysql
+
+      - name: Ensure mysqld.log file exists
+      file:
+        path: /var/log/mysqld.log
+        state: touch
+        owner: mysql
+        group: mysql
+
+    - name: Configure my.cnf file
+      copy:
+        content: |
+          [mysqld]
+          bind-address=0.0.0.0
+          server-id=2
+          log_bin=/var/log/mysql/mybin.log
+          log-error=/var/log/mysqld.log
+          pid-file=/var/run/mysqld/mysqld.pid
+        dest: /etc/my.cnf
+
+
+    - name: Configure /root/.my.cnf
+      copy:
+        content: |
+          [client]
+          user=root
+        dest: /root/.my.cnf
+
+    - name: Restart MySQL
+      systemd:
+        name: mysql
+        state: restarted
+
+     - name: Copy conf.j2 template to remote host
+      template:
+        src: conf_slave.j2
+        dest: /tmp/conf.sql
+
+    - name: Execute SQL queries
+      mysql_db:
+        name: mysql
+        state: import
+        target: /tmp/conf.sql
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      become: true
+
+    - name: Show SLAVE status
+      shell: "mysql -u root -p'{{ mysql_password }}' -e 'SHOW SLAVE STATUS\\G;'"
+      register: slave_status_output
+
+    - name: Display SLAVE status output
+      debug:
+        var: slave_status_output.stdout_lines        
