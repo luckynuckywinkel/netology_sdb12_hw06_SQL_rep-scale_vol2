@@ -1,0 +1,15 @@
+---
+- name: install / config MySQL slave
+  hosts: slave
+  vars_files:
+    - "sqlpass.yaml"
+  become: true
+  tasks:
+
+    - name: Show databases
+      shell: "mysql -u root -p'{{ mysql_password }}' -e 'SHOW DATABASES;'"
+      register: databases
+
+    - name: Display databases
+      debug:
+        var: databases.stdout_lines
