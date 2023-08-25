@@ -1,0 +1,138 @@
+---
+- name: install / config MySQL master
+  hosts: master
+  vars_files:
+    - "sqlpass.yaml"
+  become: true
+  tasks:
+
+    - name: apt update
+      apt:
+        update_cache: true
+
+
+    - name: Install GNUPG
+      apt:
+        name: gnupg
+        state: present
+
+
+    - name: Install Python Pip
+      apt:
+        name: python-pip
+
+    - name: Install setuptools package
+      apt:
+        name: python-setuptools
+      become: yes
+
+
+    - name: Install PyMySQL module
+      pip:
+        name: pymysql<1.0.0
+      become: yes
+
+    - name: Add MySQL GPG key
+      apt_key:
+        url: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+        state: present
+
+    - name: Add MySQL APT repository
+      apt_repository:
+        repo: deb http://repo.mysql.com/apt/debian/ buster mysql-8.0
+        state: present
+
+    - name: apt update
+      apt:
+        update_cache: true
+
+    - name: Install MySQL packages
+      apt:
+        name:
+          - wget
+          - mysql-server
+          - mysql-client
+        state: present
+
+    - name: Create MySQL log directory
+      file:
+        path: /var/log/mysql
+        state: directory
+        owner: mysql
+        group: mysql
+
+    - name: Create MySQL lib directory
+      file:
+        path: /var/lib/mysql
+        state: directory
+        owner: mysql
+        group: mysql
+  
+    - name: Ensure mysqld.log file exists
+      file:
+        path: /var/log/mysqld.log
+        state: touch
+        owner: mysql
+        group: mysql
+
+    - name: Configure my.cnf file
+      copy:
+        content: |
+          [mysqld]
+          bind-address=0.0.0.0
+          server-id=1
+          log_bin=/var/log/mysql/mybin.log
+          log-error=/var/log/mysqld.log
+          pid-file=/var/run/mysqld/mysqld.pid
+        dest: /etc/my.cnf
+
+
+    - name: Configure /root/.my.cnf
+      copy:
+        content: |
+          [client]
+          user=root
+        dest: /root/.my.cnf
+
+    - name: Restart MySQL
+      systemd:
+        name: mysql
+        state: restarted
+
+
+    - name: Copy conf.sql to remote host
+      copy:
+        src: conf.sql
+        dest: /tmp/conf.sql
+  - name: Execute SQL queries
+      mysql_db:
+        name: mysql
+        state: import
+        target: /tmp/conf.sql
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      become: true
+
+
+    - name: Save SHOW MASTER STATUS output
+      shell: "mysql -u root -p'{{ mysql_password }}' -e 'SHOW MASTER STATUS;' > master_status.txt"
+
+
+    - name: Read SHOW MASTER STATUS from file
+      shell: cat master_status.txt
+      register: master_status_output
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Parse SHOW MASTER STATUS output
+      set_fact:
+        binlog_file: "{{ master_status_output.stdout_lines[1].split()[0] }}"
+        binlog_position: "{{ master_status_output.stdout_lines[1].split()[1] }}"
+
+    - name: Modify variables file
+      lineinfile:
+        path: /home/vagrant/ansible_proj/sqlpass.yaml
+        line: "{{ item }}"
+      with_items:
+        - "binlog_file: \"{{ binlog_file }}\""
+        - "binlog_position: \"{{ binlog_position }}\""
+      delegate_to: localhost
